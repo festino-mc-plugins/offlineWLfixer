@@ -1,136 +1,67 @@
 package com.wl;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.bukkit.Bukkit;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
-
 public class VersionGetter {
 	private static Integer version_number = null;
-	private static final Integer MAX_VERSION = 10000;
-	private static final String ADDRESS = "127.0.0.1";
-	private static final int PORT = Bukkit.getPort();
-	
-	private static boolean calculating = false;
 	
 	public static int getVersionNumber()
 	{
 		if (version_number != null) {
 			return version_number;
 		}
-		
-		if (calculating) {
-			return 0;
-		}
-		
-		calculating = true;
 
 		new Thread(new Runnable() {
 		    public void run() {
-		    	int res = calculate();
-				calculating = false;
+		    	requestVersion();
 		    }
 		}).start();
 		
 		return 0;
 	}
 	
-	private static int calculate()
+	private static void requestVersion()
 	{
-		InetSocketAddress host;
-		Socket socket;
-		
-		DataOutputStream output;
-	    DataInputStream input;
-	    
-	    try {
-		    host = new InetSocketAddress(ADDRESS, PORT);
-		    socket = new Socket();
-			socket.connect(host, 3001);
-			output = new DataOutputStream(socket.getOutputStream());
-			input = new DataInputStream(socket.getInputStream());
-	    } catch (Exception e) {
-	    	return -1;
-		}
-
-		if (socket.getPort() == 0) {
-			try {
-				socket.close();
-			} catch (IOException e) { }
-			return -1;
-		}
-	    
-		int num = 0;
-	    while (version_number == null) {
-	    	Bukkit.getLogger().info("Test protocol version " + num);
-	    	
-			ByteArrayDataOutput buf = ByteStreams.newDataOutput();
-			try {
-		        PacketUtils.writeVarInt(buf, 0);
-		        PacketUtils.writeVarInt(buf, num);
-		        PacketUtils.writeString(buf, host.getAddress().getHostAddress());
-		        buf.writeShort(host.getPort());
-		        PacketUtils.writeVarInt(buf, 2);
-		        PacketUtils.sendPacket(buf, output);
-		        
-		        buf = ByteStreams.newDataOutput();
+		String version = Bukkit.getBukkitVersion().split("-")[0];
+		try {
+			URL url = new URL("https://wiki.vg/Protocol_version_numbers");
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			con.setRequestProperty("Content-Type", "application/json");
+			String contentType = con.getHeaderField("Content-Type");
+			con.setConnectTimeout(5000);
+			con.setReadTimeout(5000);
+			
+			int status = con.getResponseCode();
+			BufferedReader in = new BufferedReader(
+					  new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			boolean next = false;
+			String int_prefix = "<td> ";
+			while ((inputLine = in.readLine()) != null) {
+				if (next && inputLine.startsWith(int_prefix)) {
+					version_number = Integer.parseInt(inputLine.substring(int_prefix.length()));
+					break;
+				}
+				// <td> <b><span ...><a ...>1.13.2</a></span></b>
+				inputLine = inputLine.split("</a>")[0];
+				String[] parts = inputLine.split(">");
+				inputLine = parts[parts.length - 1];
 				
-				PacketUtils.writeVarInt(buf, 0);
-				PacketUtils.writeString(buf, "p" + num);
-				PacketUtils.sendPacket(buf, output);
-	        	output.flush();
-	        	
-	    	    int size = PacketUtils.readVarInt(input);
-	    	    int packetId = PacketUtils.readVarInt(input);
-
-	    	    if (packetId == -1) {
-	    	        throw new IOException("Premature end of stream.");
-	    	    }
-System.out.println("5");
-	    	    if (packetId != 0x01) {
-	    	    	if(packetId == 0x00) {
-	    	    		int length = PacketUtils.readVarInt(input);
-	    	    		byte[] in = new byte[length];
-	    	    	    input.readFully(in);  //read json string
-	    	    	    String json = new String(in);
-	    	    	    System.out.println("json: " + json);
-	    	    	    if (json.contains("Outdated client! Please use")) {
-	    	    	    	num++;
-	    	    	    	continue;
-	    	    	    }
-	    	    	}
-	    	    }
-	        	
-	        	version_number = num;
-			} catch (Exception e) { }
-			
-			num++;
-			if (num >= MAX_VERSION) {
-				try {
-					socket.close();
-				} catch (IOException e) { }
-				return -1;
+				if (inputLine.contains(version)) {
+					next = true;
+				}
 			}
-			
-			try {
-				Thread.sleep(30000);
-			} catch (InterruptedException e) {
-			}
+			in.close();
+			con.disconnect();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-	    
-	    Bukkit.getLogger().info("Current protocol version: " + version_number);
-	    
-	    try {
-			socket.close();
-		} catch (IOException e) {
-		}
-	    
-	    return version_number;
 	}
 }

@@ -1,0 +1,6 @@
+name: OfflineWLFixer
+main: com.wl.mainListener
+autor: FEST_Channel
+version: 1.0.0
+commands:
+         wlf:

@@ -26,6 +26,8 @@ import com.google.common.io.ByteStreams;
 
 
 public class Client implements Listener {
+	final int VERSION_NUMBER = VersionGetter.getVersionNumber();
+	
 	//String address;
 	//int port;
 	CommandSender sender;
@@ -38,7 +40,7 @@ public class Client implements Listener {
 	
 	DataOutputStream output;
     DataInputStream input;
-    
+
 	static boolean wl = Bukkit.hasWhitelist();
 	
 	@EventHandler
@@ -46,7 +48,7 @@ public class Client implements Listener {
 		//System.out.println("Testing login of "+event.getName()+" while activator is "+name_activator+" ("+(event.getName().equals(name_activator))+")");
 		if(nicks.contains(event.getName())) {
 			wl = Bukkit.hasWhitelist();
-			//System.out.println(wl);
+			System.out.println("Whitelist: " + (wl ? "ON" : "OFF"));
 			Bukkit.setWhitelist(false);
 		}
 		
@@ -78,22 +80,23 @@ public class Client implements Listener {
 	public Client(CommandSender sender, String address, int port, String nick) {
 	    try {
 	    	this.sender = sender;
-	    	this.senders.add(sender);
-	    	this.nicks.add(nick);
 	    	this.nick = nick;
+	    	senders.add(sender);
+	    	nicks.add(nick);
 	    	host = new InetSocketAddress(address, port);
 	    	socket = new Socket();
 			socket.connect(host, 3000);
 			output = new DataOutputStream(socket.getOutputStream());
 			input = new DataInputStream(socket.getInputStream());
 		} catch (IOException e) {
-			System.out.println("Something went wrong... with creating "+this.getClass().getName()+".");
+			System.out.println("Something went wrong while creating "+this.getClass().getName()+".");
 			//e.printStackTrace();
 		}
 	}
 	
 	public boolean connect() throws Exception {
-		if(socket.getPort() == 0) throw new Exception("Socket wasn't connected!");
+		if (socket.getPort() == 0)
+			throw new Exception("Socket wasn't connected!");
 	    /*----------------------------
 	    Client connects to server
 		C→S: Handshake State=2
@@ -151,17 +154,17 @@ public class Client implements Listener {
 		// C->S : Handshake State=1
 	    // send packet length and packet
 	    /*byte [] handshakeMessage = createHandshakeMessage(host.getAddress().getHostAddress(), host.getPort());
-	    writeVarInt(output, handshakeMessage.length);
+	    PacketUtils.writeVarInt(output, handshakeMessage.length);
 	    output.write(handshakeMessage);
 	    output.flush();*/
 	    ByteArrayDataOutput buf = ByteStreams.newDataOutput();
-        writeVarInt(buf, 0);
-        writeVarInt(buf, 340);
-        writeString(buf, host.getAddress().getHostAddress());
+        PacketUtils.writeVarInt(buf, 0);
+        PacketUtils.writeVarInt(buf, VERSION_NUMBER);
+        PacketUtils.writeString(buf, host.getAddress().getHostAddress());
         buf.writeShort(host.getPort());
-        writeVarInt(buf, 2);
+        PacketUtils.writeVarInt(buf, 2);
 
-        sendPacket(buf, output);
+        PacketUtils.sendPacket(buf, output);
 	    
 	    //System.out.println("Done handshake!");
 		return null;
@@ -169,14 +172,14 @@ public class Client implements Listener {
 	
 	public String StageLoginStart() throws Exception {
 		/*byte [] loginstartMessage = createLoginStart(nick);
-	    writeVarInt(output, loginstartMessage.length);
+	    PacketUtils.writeVarInt(output, loginstartMessage.length);
 	    output.write(loginstartMessage);
 	    output.flush();*/
 		ByteArrayDataOutput buf = ByteStreams.newDataOutput();
-		writeVarInt(buf, 0);
-        writeString(buf, nick);
+		PacketUtils.writeVarInt(buf, 0);
+		PacketUtils.writeString(buf, nick);
 
-        sendPacket(buf, output);
+        PacketUtils.sendPacket(buf, output);
 
         output.flush();
 	    /*
@@ -185,8 +188,8 @@ public class Client implements Listener {
 	    output.writeByte(0x00); //packet id for ping
 	     */
 	    // S->C : Response
-	    int size = readVarInt(input);
-	    int packetId = readVarInt(input);
+	    int size = PacketUtils.readVarInt(input);
+	    int packetId = PacketUtils.readVarInt(input);
 
 	    if (packetId == -1) {
 	        throw new IOException("Premature end of stream.");
@@ -194,16 +197,16 @@ public class Client implements Listener {
 
 	    if (packetId != 0x01) {
 	    	if(packetId == 0x00) {
-	    		int length = readVarInt(input);
+	    		int length = PacketUtils.readVarInt(input);
 	    		byte[] in = new byte[length];
 	    	    input.readFully(in);  //read json string
 	    	    String json = new String(in);
-	    	    //System.out.println("Recieved packet 0x00, 0x01 was expected! : "+json);
+	    	    System.out.println("Recieved packet 0x00, 0x01 was expected! : "+json);
 	    	    return null;
 	    	}
 	        //throw new IOException("Invalid packetID");
 	    }
-	    int length = readVarInt(input); //length of json string
+	    int length = PacketUtils.readVarInt(input); //length of json string
 
 	    if (length == -1) {
 	        throw new IOException("Premature end of stream.");
@@ -242,8 +245,8 @@ public class Client implements Listener {
 
 
 	    // S->C : Response
-	    int size = readVarInt(input);
-	    int packetId = readVarInt(input);
+	    int size = PacketUtils.readVarInt(input);
+	    int packetId = PacketUtils.readVarInt(input);
 
 	    if (packetId == -1) {
 	        throw new IOException("Premature end of stream.");
@@ -252,7 +255,7 @@ public class Client implements Listener {
 	    if (packetId != 0x00) { //we want a status response
 	        throw new IOException("Invalid packetID");
 	    }
-	    int length = readVarInt(input); //length of json string
+	    int length = PacketUtils.readVarInt(input); //length of json string
 
 	    if (length == -1) {
 	        throw new IOException("Premature end of stream.");
@@ -273,8 +276,8 @@ public class Client implements Listener {
 	    output.writeLong(now); //time!?
 
 	    // S->C : Pong
-	    readVarInt(input);
-	    packetId = readVarInt(input);
+	    PacketUtils.readVarInt(input);
+	    packetId = PacketUtils.readVarInt(input);
 	    if (packetId == -1) {
 	        throw new IOException("Premature end of stream.");
 	    }
@@ -324,11 +327,6 @@ public class Client implements Listener {
 	    out.write(bytes);
 	}
 
-	public static void writeString(ByteArrayDataOutput out, String s) throws IOException{ //writes a string to the bytebuffer
-        writeVarInt(out, s.length());
-        out.write(s.getBytes("UTF-8"));
-    }
-
 	@Deprecated
 	public static void writeVarInt(DataOutputStream out, int paramInt) throws IOException {
 	    while (true) {
@@ -341,36 +339,4 @@ public class Client implements Listener {
 	        paramInt >>>= 7;
 	    }
 	}
-	
-	public static void writeVarInt(ByteArrayDataOutput outs, int paramInt) throws IOException{ //writes a varint to the buffer
-        while (true) {
-          if ((paramInt & 0xFFFFFF80) == 0) {
-            outs.writeByte((byte) paramInt);
-            return;
-          }
-     
-          outs.writeByte((byte) (paramInt & 0x7F | 0x80));
-          paramInt >>>= 7;
-        }
-      }
-
-	public static int readVarInt(DataInputStream in) throws IOException {
-	    int i = 0;
-	    int j = 0;
-	    while (true) {
-	        int k = in.readByte();
-	        i |= (k & 0x7F) << j++ * 7;
-	        if (j > 5) throw new RuntimeException("VarInt too big");
-	        if ((k & 0x80) != 128) break;
-	    }
-	    return i;
-	}
-	
-	public void sendPacket(ByteArrayDataOutput buf, DataOutputStream out) throws Exception{
-        ByteArrayDataOutput send1 = ByteStreams.newDataOutput();
-        writeVarInt(send1, buf.toByteArray().length);
-        send1.write(buf.toByteArray());
-        out.write(send1.toByteArray());
-        out.flush();
-    }
 }

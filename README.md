@@ -7,9 +7,9 @@ While vanilla command needs "minecraft.command.whitelist" permissions for all th
 * "minecraft.command.whitelist.list" - /wl list
 * "minecraft.command.whitelist.enable" - /wl on
 * "minecraft.command.whitelist.disable" - /wl off
-* "minecraft.command.whitelist.reload" - /wl reload
+* "minecraft.command.whitelist.reload" - /wl reload  
 But also player must have vanilla permissions because player is the command executor for vanilla command.
 
 To do:
 * Provide command execution without "minecraft.command.whitelist" permission but with corresponding "minecraft.command.whitelist.<...>" permission.
-* May be tab completing improvement using https://github.com/JorelAli/1.13-Command-API.
+* May be tab completing improvement using https://github.com/JorelAli/1.13-Command-API.  

@@ -65,7 +65,7 @@ public class Client implements Listener {
 			String nick = event.getPlayer().getName();
 			CommandSender sender = senders.get(nicks.indexOf(nick));
     		Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "whitelist add " + nick);
-			sender.sendMessage(String.format(mainListener.MSG_ADD_OK, nick));
+			sender.sendMessage(String.format(WLCommandExecutor.MSG_ADD_OK, nick));
 			Bukkit.setWhitelist(wl);
 
     		senders.remove(sender);

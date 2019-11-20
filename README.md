@@ -11,6 +11,6 @@ While vanilla command needs "minecraft.command.whitelist" permissions for all th
 
 But also player must have vanilla permissions because player is the command executor for vanilla command.
 
-To do:
+# To do:
 * Provide command execution without "minecraft.command.whitelist" permission but with corresponding "minecraft.command.whitelist.<...>" permission.
 * May be tab completing improvement using https://github.com/JorelAli/1.13-Command-API.  

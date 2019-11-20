@@ -1,6 +1,6 @@
 name: OfflineWLFixer
-main: com.wl.mainListener
+main: com.wl.Main
 autor: FEST_Channel
 version: 1.0.0
 commands:
-         wlf:
+         wl:

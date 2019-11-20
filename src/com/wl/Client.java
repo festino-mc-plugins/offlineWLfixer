@@ -39,14 +39,14 @@ public class Client implements Listener {
 	Socket socket;
 	
 	DataOutputStream output;
-    DataInputStream input;
+	DataInputStream input;
 
 	static boolean wl = Bukkit.hasWhitelist();
 	
 	@EventHandler
-	public static void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
-		//System.out.println("Testing login of "+event.getName()+" while activator is "+name_activator+" ("+(event.getName().equals(name_activator))+")");
-		if(nicks.contains(event.getName())) {
+	public static void onPlayerLogin(AsyncPlayerPreLoginEvent event)
+	{
+		if (nicks.contains(event.getName())) {
 			wl = Bukkit.hasWhitelist();
 			System.out.println("Whitelist: " + (wl ? "ON" : "OFF"));
 			Bukkit.setWhitelist(false);
@@ -55,37 +55,35 @@ public class Client implements Listener {
 	}
 	
 	@EventHandler
-	public static void onPlayerLogin(PlayerJoinEvent event) {
-		//System.out.println("Testing login of "+event.getName()+" while activator is "+name_activator+" ("+(event.getName().equals(name_activator))+")");
-		if(nicks.contains(event.getPlayer().getName())) {
+	public static void onPlayerLogin(PlayerJoinEvent event)
+	{
+		if (nicks.contains(event.getPlayer().getName())) {
 			//disconnect
-			
 			event.getPlayer().kickPlayer("ti eto vidish?");
-	        
+			
 			String nick = event.getPlayer().getName();
 			CommandSender sender = senders.get(nicks.indexOf(nick));
-    		Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "whitelist add " + nick);
+			Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "whitelist add " + nick);
 			sender.sendMessage(String.format(WLCommandExecutor.MSG_ADD_OK, nick));
 			Bukkit.setWhitelist(wl);
 
-    		senders.remove(sender);
-    		nicks.remove(nick);
+			senders.remove(sender);
+			nicks.remove(nick);
 		}
 		
 	}
 
-	public Client() {
+	public Client() { }
 	
-	}
-	
-	public Client(CommandSender sender, String address, int port, String nick) {
-	    try {
-	    	this.sender = sender;
-	    	this.nick = nick;
-	    	senders.add(sender);
-	    	nicks.add(nick);
-	    	host = new InetSocketAddress(address, port);
-	    	socket = new Socket();
+	public Client(CommandSender sender, String address, int port, String nick)
+	{
+		try {
+			this.sender = sender;
+			this.nick = nick;
+			senders.add(sender);
+			nicks.add(nick);
+			host = new InetSocketAddress(address, port);
+			socket = new Socket();
 			socket.connect(host, 3000);
 			output = new DataOutputStream(socket.getOutputStream());
 			input = new DataInputStream(socket.getInputStream());
@@ -98,8 +96,8 @@ public class Client implements Listener {
 	public boolean connect() throws Exception {
 		if (socket.getPort() == 0)
 			throw new Exception("Socket wasn't connected!");
-	    /*----------------------------
-	    Client connects to server
+		/*----------------------------
+		Client connects to server
 		C→S: Handshake State=2
 		C→S: Login Start
 		S→C: Encryption Request
@@ -119,7 +117,7 @@ public class Client implements Listener {
 		C→S: Player Position And Look (to confirm the spawn position)
 		C→S: Client Status (sent either before or while receiving chunks, further testing needed, server handles correctly if not sent)
 		S→C: inventory, Chunk Data, entities, etc
-	    ----------------------------*/
+		----------------------------*/
 
 		StageHandshake();
 		StageLoginStart();
@@ -127,217 +125,217 @@ public class Client implements Listener {
 		
 		//Bukkit.getServer().getWhitelistedPlayers().add()
 		/*Timer pollTimer = new Timer();
-	    long delayMs = 1000;
-	    pollTimer.schedule(
-	            new TimerTask() {
-	                @Override
-	                public void run() {
-	                }
-		        }, delayMs);*/
-	    
-	    
-	    
-	    return true;
+		long delayMs = 1000;
+		pollTimer.schedule(
+				new TimerTask() {
+					@Override
+					public void run() {
+					}
+				}, delayMs);*/
+		
+		
+		
+		return true;
 	}
 	
 	public String StageHandshake() throws Exception {
 
-	    //System.out.println("Attempting handshake... "+host.getAddress().toString());
-	    
-	    /*----------------------------
-	    C->S : Handshake State=1
-	    C->S : Request
-	    S->C : Response
-	    C->S : Ping
-	    S->C : Pong
-	    ----------------------------*/
+		//System.out.println("Attempting handshake... "+host.getAddress().toString());
+		
+		/*----------------------------
+		C->S : Handshake State=1
+		C->S : Request
+		S->C : Response
+		C->S : Ping
+		S->C : Pong
+		----------------------------*/
 
 		// C->S : Handshake State=1
-	    // send packet length and packet
-	    /*byte [] handshakeMessage = createHandshakeMessage(host.getAddress().getHostAddress(), host.getPort());
-	    PacketUtils.writeVarInt(output, handshakeMessage.length);
-	    output.write(handshakeMessage);
-	    output.flush();*/
-	    ByteArrayDataOutput buf = ByteStreams.newDataOutput();
-        PacketUtils.writeVarInt(buf, 0);
-        PacketUtils.writeVarInt(buf, VERSION_NUMBER);
-        PacketUtils.writeString(buf, host.getAddress().getHostAddress());
-        buf.writeShort(host.getPort());
-        PacketUtils.writeVarInt(buf, 2);
+		// send packet length and packet
+		/*byte [] handshakeMessage = createHandshakeMessage(host.getAddress().getHostAddress(), host.getPort());
+		PacketUtils.writeVarInt(output, handshakeMessage.length);
+		output.write(handshakeMessage);
+		output.flush();*/
+		ByteArrayDataOutput buf = ByteStreams.newDataOutput();
+		PacketUtils.writeVarInt(buf, 0);
+		PacketUtils.writeVarInt(buf, VERSION_NUMBER);
+		PacketUtils.writeString(buf, host.getAddress().getHostAddress());
+		buf.writeShort(host.getPort());
+		PacketUtils.writeVarInt(buf, 2);
 
-        PacketUtils.sendPacket(buf, output);
-	    
-	    //System.out.println("Done handshake!");
+		PacketUtils.sendPacket(buf, output);
+		
+		//System.out.println("Done handshake!");
 		return null;
 	}
 	
 	public String StageLoginStart() throws Exception {
 		/*byte [] loginstartMessage = createLoginStart(nick);
-	    PacketUtils.writeVarInt(output, loginstartMessage.length);
-	    output.write(loginstartMessage);
-	    output.flush();*/
+		PacketUtils.writeVarInt(output, loginstartMessage.length);
+		output.write(loginstartMessage);
+		output.flush();*/
 		ByteArrayDataOutput buf = ByteStreams.newDataOutput();
 		PacketUtils.writeVarInt(buf, 0);
 		PacketUtils.writeString(buf, nick);
 
-        PacketUtils.sendPacket(buf, output);
+		PacketUtils.sendPacket(buf, output);
 
-        output.flush();
-	    /*
-	    // C->S : Request
-	    output.writeByte(0x01); //size is only 1
-	    output.writeByte(0x00); //packet id for ping
-	     */
-	    // S->C : Response
-	    int size = PacketUtils.readVarInt(input);
-	    int packetId = PacketUtils.readVarInt(input);
+		output.flush();
+		/*
+		// C->S : Request
+		output.writeByte(0x01); //size is only 1
+		output.writeByte(0x00); //packet id for ping
+		 */
+		// S->C : Response
+		int size = PacketUtils.readVarInt(input);
+		int packetId = PacketUtils.readVarInt(input);
 
-	    if (packetId == -1) {
-	        throw new IOException("Premature end of stream.");
-	    }
+		if (packetId == -1) {
+			throw new IOException("Premature end of stream.");
+		}
 
-	    if (packetId != 0x01) {
-	    	if(packetId == 0x00) {
-	    		int length = PacketUtils.readVarInt(input);
-	    		byte[] in = new byte[length];
-	    	    input.readFully(in);  //read json string
-	    	    String json = new String(in);
-	    	    System.out.println("Recieved packet 0x00, 0x01 was expected! : "+json);
-	    	    return null;
-	    	}
-	        //throw new IOException("Invalid packetID");
-	    }
-	    int length = PacketUtils.readVarInt(input); //length of json string
+		if (packetId != 0x01) {
+			if(packetId == 0x00) {
+				int length = PacketUtils.readVarInt(input);
+				byte[] in = new byte[length];
+				input.readFully(in);  //read json string
+				String json = new String(in);
+				System.out.println("Recieved packet 0x00, 0x01 was expected! : "+json);
+				return null;
+			}
+			//throw new IOException("Invalid packetID");
+		}
+		int length = PacketUtils.readVarInt(input); //length of json string
 
-	    if (length == -1) {
-	        throw new IOException("Premature end of stream.");
-	    }
+		if (length == -1) {
+			throw new IOException("Premature end of stream.");
+		}
 
-	    if (length == 0) {
-	        throw new IOException("Invalid string length.");
-	    }
+		if (length == 0) {
+			throw new IOException("Invalid string length.");
+		}
 
-	    byte[] in = new byte[length];
-	    input.readFully(in);  //read json string
-	    String json = new String(in);
-	    //System.out.println(json);
-	    
+		byte[] in = new byte[length];
+		input.readFully(in);  //read json string
+		String json = new String(in);
+		//System.out.println(json);
+		
 		return null;
 	}
 	
 	public String infoRequest() throws IOException {
 		/*----------------------------
-	    C->S : Handshake State=1
-	    C->S : Request
-	    S->C : Response
-	    C->S : Ping
-	    S->C : Pong
-	    ----------------------------*/
+		C->S : Handshake State=1
+		C->S : Request
+		S->C : Response
+		C->S : Ping
+		S->C : Pong
+		----------------------------*/
 
-	    byte [] handshakeMessage = createHandshakeMessage(host.getAddress().getHostAddress(), host.getPort());
+		byte [] handshakeMessage = createHandshakeMessage(host.getAddress().getHostAddress(), host.getPort());
 		// C->S : Handshake State=1
-	    // send packet length and packet
-	    writeVarInt(output, handshakeMessage.length);
-	    output.write(handshakeMessage);
-	    
+		// send packet length and packet
+		writeVarInt(output, handshakeMessage.length);
+		output.write(handshakeMessage);
+		
 		// C->S : Request
-	    output.writeByte(0x01); //size is only 1
-	    output.writeByte(0x00); //packet id for ping
+		output.writeByte(0x01); //size is only 1
+		output.writeByte(0x00); //packet id for ping
 
 
-	    // S->C : Response
-	    int size = PacketUtils.readVarInt(input);
-	    int packetId = PacketUtils.readVarInt(input);
+		// S->C : Response
+		int size = PacketUtils.readVarInt(input);
+		int packetId = PacketUtils.readVarInt(input);
 
-	    if (packetId == -1) {
-	        throw new IOException("Premature end of stream.");
-	    }
+		if (packetId == -1) {
+			throw new IOException("Premature end of stream.");
+		}
 
-	    if (packetId != 0x00) { //we want a status response
-	        throw new IOException("Invalid packetID");
-	    }
-	    int length = PacketUtils.readVarInt(input); //length of json string
+		if (packetId != 0x00) { //we want a status response
+			throw new IOException("Invalid packetID");
+		}
+		int length = PacketUtils.readVarInt(input); //length of json string
 
-	    if (length == -1) {
-	        throw new IOException("Premature end of stream.");
-	    }
+		if (length == -1) {
+			throw new IOException("Premature end of stream.");
+		}
 
-	    if (length == 0) {
-	        throw new IOException("Invalid string length.");
-	    }
+		if (length == 0) {
+			throw new IOException("Invalid string length.");
+		}
 
-	    byte[] in = new byte[length];
-	    input.readFully(in);  //read json string
-	    String json = new String(in);
+		byte[] in = new byte[length];
+		input.readFully(in);  //read json string
+		String json = new String(in);
 
-	    // C->S : Ping
-	    long now = System.currentTimeMillis();
-	    output.writeByte(0x09); //size of packet
-	    output.writeByte(0x01); //0x01 for ping
-	    output.writeLong(now); //time!?
+		// C->S : Ping
+		long now = System.currentTimeMillis();
+		output.writeByte(0x09); //size of packet
+		output.writeByte(0x01); //0x01 for ping
+		output.writeLong(now); //time!?
 
-	    // S->C : Pong
-	    PacketUtils.readVarInt(input);
-	    packetId = PacketUtils.readVarInt(input);
-	    if (packetId == -1) {
-	        throw new IOException("Premature end of stream.");
-	    }
+		// S->C : Pong
+		PacketUtils.readVarInt(input);
+		packetId = PacketUtils.readVarInt(input);
+		if (packetId == -1) {
+			throw new IOException("Premature end of stream.");
+		}
 
-	    if (packetId != 0x01) {
-	        throw new IOException("Invalid packetID");
-	    }
-	    long pingtime = input.readLong(); //read response
-	     
-	    
+		if (packetId != 0x01) {
+			throw new IOException("Invalid packetID");
+		}
+		long pingtime = input.readLong(); //read response
+		 
+		
 
-	    // print out server info
-	    //System.out.println(json);
-	    //System.out.println("Done handshake!");
+		// print out server info
+		//System.out.println(json);
+		//System.out.println("Done handshake!");
 		return json;
 	}
 
 	@Deprecated
 	public static byte [] createHandshakeMessage(String host, int port) throws IOException {
-	    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
-	    DataOutputStream handshake = new DataOutputStream(buffer);
-	    handshake.writeByte(0x00); //packet id for handshake
-	    writeVarInt(handshake, 4); //protocol version
-	    writeString(handshake, host, StandardCharsets.UTF_8);
-	    handshake.writeShort(port); //port
-	    writeVarInt(handshake, 2); //state (1 for handshake)
+		DataOutputStream handshake = new DataOutputStream(buffer);
+		handshake.writeByte(0x00); //packet id for handshake
+		writeVarInt(handshake, 4); //protocol version
+		writeString(handshake, host, StandardCharsets.UTF_8);
+		handshake.writeShort(port); //port
+		writeVarInt(handshake, 2); //state (1 for handshake)
 
-	    return buffer.toByteArray();
+		return buffer.toByteArray();
 	}
 
 	@Deprecated
 	public static byte [] createLoginStart(String nick) throws IOException {
-	    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
-	    DataOutputStream loginstart = new DataOutputStream(buffer);
-	    loginstart.writeByte(0x00);
-	    writeString(loginstart, nick, StandardCharsets.UTF_8);
+		DataOutputStream loginstart = new DataOutputStream(buffer);
+		loginstart.writeByte(0x00);
+		writeString(loginstart, nick, StandardCharsets.UTF_8);
 
-	    return buffer.toByteArray();
+		return buffer.toByteArray();
 	}
 
 	@Deprecated
 	public static void writeString(DataOutputStream out, String string, Charset charset) throws IOException {
-	    byte [] bytes = string.getBytes(charset);
-	    writeVarInt(out, bytes.length);
-	    out.write(bytes);
+		byte [] bytes = string.getBytes(charset);
+		writeVarInt(out, bytes.length);
+		out.write(bytes);
 	}
 
 	@Deprecated
 	public static void writeVarInt(DataOutputStream out, int paramInt) throws IOException {
-	    while (true) {
-	        if ((paramInt & 0xFFFFFF80) == 0) {
-	          out.writeByte(paramInt);
-	          return;
-	        }
+		while (true) {
+			if ((paramInt & 0xFFFFFF80) == 0) {
+			  out.writeByte(paramInt);
+			  return;
+			}
 
-	        out.writeByte(paramInt & 0x7F | 0x80);
-	        paramInt >>>= 7;
-	    }
+			out.writeByte(paramInt & 0x7F | 0x80);
+			paramInt >>>= 7;
+		}
 	}
 }

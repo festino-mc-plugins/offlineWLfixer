@@ -18,9 +18,9 @@ public class VersionGetter {
 		}
 
 		new Thread(new Runnable() {
-		    public void run() {
-		    	requestVersion();
-		    }
+			public void run() {
+				requestVersion();
+			}
 		}).start();
 		
 		return 0;

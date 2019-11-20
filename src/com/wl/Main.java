@@ -20,7 +20,7 @@ public class Main extends JavaPlugin {
 
 		WLCommandExecutor ce = new WLCommandExecutor();
 		WLTabCompleter tc = new WLTabCompleter();
-    	getCommand(COMMAND_WLF).setExecutor(ce);
-    	getCommand(COMMAND_WLF).setTabCompleter(tc);
+		getCommand(COMMAND_WLF).setExecutor(ce);
+		getCommand(COMMAND_WLF).setTabCompleter(tc);
 	}
 }

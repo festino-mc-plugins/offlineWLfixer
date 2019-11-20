@@ -8,6 +8,7 @@ While vanilla command needs "minecraft.command.whitelist" permissions for all th
 * "minecraft.command.whitelist.enable" - /wl on
 * "minecraft.command.whitelist.disable" - /wl off
 * "minecraft.command.whitelist.reload" - /wl reload  
+
 But also player must have vanilla permissions because player is the command executor for vanilla command.
 
 To do:

@@ -120,20 +120,12 @@ public class Client implements Listener {
 		----------------------------*/
 
 		StageHandshake();
-		StageLoginStart();
+		String res = StageLoginStart();
 		//StageEncryptionResponse();
 		
-		//Bukkit.getServer().getWhitelistedPlayers().add()
-		/*Timer pollTimer = new Timer();
-		long delayMs = 1000;
-		pollTimer.schedule(
-				new TimerTask() {
-					@Override
-					public void run() {
-					}
-				}, delayMs);*/
-		
-		
+		if (res != null) {
+			return false;
+		}
 		
 		return true;
 	}
@@ -200,8 +192,8 @@ public class Client implements Listener {
 				byte[] in = new byte[length];
 				input.readFully(in);  //read json string
 				String json = new String(in);
-				System.out.println("Recieved packet 0x00, 0x01 was expected! : "+json);
-				return null;
+				System.out.println("Recieved packet 0x00, 0x01 was expected! : " + json);
+				return json;
 			}
 			//throw new IOException("Invalid packetID");
 		}

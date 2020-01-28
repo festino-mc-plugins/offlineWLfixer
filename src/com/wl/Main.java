@@ -18,8 +18,8 @@ public class Main extends JavaPlugin {
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvents(new Client(), this);
 
-		WLCommandExecutor ce = new WLCommandExecutor();
-		WLTabCompleter tc = new WLTabCompleter();
+		WLCommandExecutor ce = new WLCommandExecutor(this);
+		WLTabCompleter tc = new WLTabCompleter(getServer());
 		getCommand(COMMAND_WLF).setExecutor(ce);
 		getCommand(COMMAND_WLF).setTabCompleter(tc);
 	}

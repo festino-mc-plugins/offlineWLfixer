@@ -3,6 +3,8 @@ package com.wl;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.OfflinePlayer;
+import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
@@ -10,6 +12,11 @@ import org.bukkit.command.TabCompleter;
 import com.wl.WLCommandExecutor.WLOption;
 
 public class WLTabCompleter implements TabCompleter {
+	Server server;
+	
+	public WLTabCompleter(Server server) {
+		this.server = server;
+	}
 
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command cmd, String lbl, String[] args)
@@ -38,11 +45,24 @@ public class WLTabCompleter implements TabCompleter {
 				}
 			}
 			
+			if (option == "remove") {
+				ArrayList<String> options = new ArrayList<String>();
+				String arg = args[1].toLowerCase();
+				for (OfflinePlayer player : server.getWhitelistedPlayers()) {
+					String name = player.getName();
+					if (name.toLowerCase().startsWith(arg)) {
+						options.add(name);
+					}
+				}
+				return options;
+			}
+			
 			if (option == "on" || option == "off" || option == "reload" || option == "list") {
 				return new ArrayList<String>();
 			}
 			
-			if (option == "add" || option == "remove") {
+			// vanilla - online players
+			if (option == "add") {
 				return null;
 			}
 		}

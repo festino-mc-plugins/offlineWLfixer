@@ -3,3 +3,4 @@
 *.class
 .classpath
 bin/plugin.yml
+/bin/

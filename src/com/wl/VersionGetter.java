@@ -3,12 +3,12 @@ package com.wl;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.bukkit.Bukkit;
 
 public class VersionGetter {
+	private static final long RECONNECT_SECONDS = 2 * 60 * 60;
 	private static Integer version_number = null;
 	
 	public static int getVersionNumber()
@@ -20,6 +20,12 @@ public class VersionGetter {
 		new Thread(new Runnable() {
 			public void run() {
 				requestVersion();
+				while (version_number == null) {
+					try {
+						Thread.sleep(RECONNECT_SECONDS * 1000);
+						requestVersion();
+					} catch (InterruptedException e) {}
+				}
 			}
 		}).start();
 		
@@ -61,6 +67,7 @@ public class VersionGetter {
 			in.close();
 			con.disconnect();
 		} catch (Exception e) {
+			Bukkit.getLogger().warning("Could not get Protocol version.");
 			e.printStackTrace();
 		}
 	}

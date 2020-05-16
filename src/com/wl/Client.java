@@ -26,8 +26,6 @@ import com.google.common.io.ByteStreams;
 
 
 public class Client implements Listener {
-	final int VERSION_NUMBER = VersionGetter.getVersionNumber();
-	
 	//String address;
 	//int port;
 	CommandSender sender;
@@ -71,6 +69,10 @@ public class Client implements Listener {
 			nicks.remove(nick);
 		}
 		
+	}
+	
+	public static int getVersionNumber() {
+		return VersionGetter.getVersionNumber();
 	}
 
 	public Client() { }
@@ -150,7 +152,7 @@ public class Client implements Listener {
 		output.flush();*/
 		ByteArrayDataOutput buf = ByteStreams.newDataOutput();
 		PacketUtils.writeVarInt(buf, 0);
-		PacketUtils.writeVarInt(buf, VERSION_NUMBER);
+		PacketUtils.writeVarInt(buf, getVersionNumber());
 		PacketUtils.writeString(buf, host.getAddress().getHostAddress());
 		buf.writeShort(host.getPort());
 		PacketUtils.writeVarInt(buf, 2);

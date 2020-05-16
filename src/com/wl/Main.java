@@ -15,5 +15,7 @@ public class Main extends JavaPlugin {
 		WLTabCompleter tc = new WLTabCompleter(getServer());
 		getCommand(COMMAND_WLF).setExecutor(ce);
 		getCommand(COMMAND_WLF).setTabCompleter(tc);
+		
+		VersionGetter.getVersionNumber();
 	}
 }

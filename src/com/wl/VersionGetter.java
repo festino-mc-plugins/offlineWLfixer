@@ -8,7 +8,7 @@ import java.net.URL;
 import org.bukkit.Bukkit;
 
 public class VersionGetter {
-	private static final long RECONNECT_SECONDS = 2 * 60 * 60;
+	private static final long RECONNECT_SECONDS = 1 * 60 * 60;
 	private static Integer version_number = null;
 	
 	public static int getVersionNumber()
@@ -49,10 +49,11 @@ public class VersionGetter {
 					  new InputStreamReader(con.getInputStream()));
 			String inputLine;
 			boolean next = false;
-			String int_prefix = "<td> ";
+			String int_prefix = "<td>";
 			while ((inputLine = in.readLine()) != null) {
 				if (next && inputLine.startsWith(int_prefix)) {
 					version_number = Integer.parseInt(inputLine.substring(int_prefix.length()));
+					Bukkit.getLogger().info("Got Protocol version " + version_number + ".");
 					break;
 				}
 				// <td> <b><span ...><a ...>1.13.2</a></span></b>
@@ -64,10 +65,13 @@ public class VersionGetter {
 					next = true;
 				}
 			}
+			if (version_number == null) {
+				Bukkit.getLogger().warning("Could not get Protocol version.");
+			}
 			in.close();
 			con.disconnect();
 		} catch (Exception e) {
-			Bukkit.getLogger().warning("Could not get Protocol version.");
+			Bukkit.getLogger().warning("Could not get Protocol version, exception:");
 			e.printStackTrace();
 		}
 	}
